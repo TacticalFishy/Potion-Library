@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Potion Crafting</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f7f7f7;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+  }
+
+  .container {
+    text-align: center;
+    background-color: white;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    width: 80%;
+    max-width: 600px;
+  }
+
+  button {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #4CAF50;
+    color: black; /* Set font color to black */
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 10px;
+  }
+
+  button:hover {
+    background-color: #45a049;
+  }
+
+  .ingredient-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 20px 0;
+  }
+
+  .ingredient-buttons button {
+    margin: 5px;
+    padding: 10px 15px;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  .ingredient-buttons button.selected {
+    background-color: #4CAF50;
+    color: white;
+  }
+
+  #result {
+    margin-top: 20px;
+    display: none;
+  }
+
+  ul {
+    list-style-type: none;
+  }
+
+  li {
+    padding: 8px;
+    margin: 4px;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    color: #333;
+  }
+
+  #potionIngredientsList {
+    text-align: left;
+    color: #333;
+  }
+
+  #potionDetails button {
+    background-color: #f44336;
+  }
+
+  #potionDetails button:hover {
+    background-color: #d32f2f;
+  }
+
+  #potionIngredientsList li {
+    background-color: #e0e0e0;
+    margin: 5px;
+    padding: 8px;
+  }
+
+  #potionDetails {
+    display: none; /* Hide potion details by default */
+  }
+
+  #potionDetails.show {
+    display: block;
+  }
+
+  #potionsList {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Creates two columns */
+    gap: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+</style>
+
+</head>
+<body>
+  <div class="container">
+    <h1>Potion Crafting</h1>
+    <div id="ingredientButtons" class="ingredient-buttons"></div>
+    <button onclick="checkPotions()">Craft Potion</button>
+
+    <div id="result" style="display: none;">
+      <h2>Possible Potions</h2>
+      <ul id="potionsList"></ul>
+    </div>
+
+    <div id="potionDetails">
+      <h2>Potion Details</h2>
+      <ul id="potionIngredientsList"></ul>
+      <button onclick="closePotionDetails()">Close</button>
+    </div>
+  </div>
+
+  <script>
+const potions = [
+  { name: "Potion of Climbing", rarity: "Common", ingredients: ["Moonvine", "Spider Silk Glands", "Gloomroot"] },
+  { name: "Potion of Healing", rarity: "Common", ingredients: ["Bloodthorn Root", "Nightshade", "Gloomroot"] },
+  { name: "Potion of Watchful Rest", rarity: "Common", ingredients: ["Rotcap Mushroom", "Silverleaf", "Frostmint Leaves"] },
+  { name: "Blood of the Lycanthrope Antidote", rarity: "Uncommon", ingredients: ["Moonvine", "Wyvern Venom", "Rotcap Mushroom"] },
+  { name: "Bottled Breath", rarity: "Uncommon", ingredients: ["Frostmint Leaves", "Gargoyle Scale", "Elemental Dust"] },
+  { name: "Mummy Rot Antidote", rarity: "Uncommon", ingredients: ["Nightshade", "Moonvine", "Spider Silk Glands"] },
+  { name: "Oil of Slipperiness", rarity: "Uncommon", ingredients: ["Dragon’s Claw", "Wyvern Venom", "Gloomroot"] },
+  { name: "Philter of Love", rarity: "Uncommon", ingredients: ["Celestial Dew", "Phoenix Feather", "Gloomroot"] },
+  { name: "Potion of Advantage", rarity: "Uncommon", ingredients: ["Frostmint Leaves", "Elven Tears", "Rotcap Mushroom"] },
+  { name: "Potion of Animal Friendship", rarity: "Uncommon", ingredients: ["Moonvine", "Dragon’s Claw", "Basilisk Eye Fluid"] },
+  { name: "Potion of Fire Breath", rarity: "Uncommon", ingredients: ["Fireblossom", "Wyvern Venom", "Rotcap Mushroom"] },
+  { name: "Potion of Giant Strength", rarity: "Uncommon", ingredients: ["Dragon’s Claw", "Thunderbloom", "Elven Tears"] },
+  { name: "Potion of Growth", rarity: "Uncommon", ingredients: ["Moonvine", "Gloomroot", "Celestial Dew"] },
+  { name: "Potion of Healing", rarity: "Uncommon", ingredients: ["Bloodthorn Root", "Frostmint Leaves", "Spider Silk Glands"] },
+  { name: "Potion of Poison", rarity: "Uncommon", ingredients: ["Nightshade", "Gloomroot", "Rotcap Mushroom"] },
+  { name: "Potion Of Polychromy", rarity: "Uncommon", ingredients: ["Ghost Orchid", "Gloomroot", "Elemental Dust"] },
+  { name: "Potion of Psionic Fortitude", rarity: "Uncommon", ingredients: ["Phoenix Feather", "Moonvine", "Elemental Dust"] },
+  { name: "Potion of Resistance", rarity: "Uncommon", ingredients: ["Frostmint Leaves", "Gargoyle Scale", "Basilisk Eye Fluid"] },
+  { name: "Potion of Water Breathing", rarity: "Uncommon", ingredients: ["Wyvern Venom", "Moonvine", "Silverleaf"] },
+  { name: "Thessaltoxin Antidote", rarity: "Uncommon", ingredients: ["Rotcap Mushroom", "Nightshade", "Gloomroot"] },
+  { name: "Elixir of Health", rarity: "Rare", ingredients: ["Moonvine", "Phoenix Feather", "Gargoyle Scale"] },
+  { name: "Oil of Etherealness", rarity: "Rare", ingredients: ["Ghost Orchid", "Elemental Dust", "Silverleaf"] },
+  { name: "Potion of Aqueous Form", rarity: "Rare", ingredients: ["Frostmint Leaves", "Moonvine", "Gloomroot"] },
+  { name: "Potion of Clairvoyance", rarity: "Rare", ingredients: ["Dragon’s Claw", "Wyvern Venom", "Rotcap Mushroom"] },
+  { name: "Potion of Diminution", rarity: "Rare", ingredients: ["Nightshade", "Basilisk Eye Fluid", "Gloomroot"] },
+  { name: "Potion of Gaseous Form", rarity: "Rare", ingredients: ["Elemental Dust", "Silverleaf", "Spider Silk Glands"] },
+  { name: "Potion of Giant Strength", rarity: "Rare", ingredients: ["Dragon’s Claw", "Thunderbloom", "Elven Tears"] },
+  { name: "Potion of Healing", rarity: "Rare", ingredients: ["Bloodthorn Root", "Nightshade", "Gloomroot"] },
+  { name: "Potion of Heroism", rarity: "Rare", ingredients: ["Celestial Dew", "Phoenix Feather", "Rotcap Mushroom"] },
+  { name: "Potion of Invulnerability", rarity: "Rare", ingredients: ["Dragon’s Claw", "Moonvine", "Elemental Dust"] },
+  { name: "Potion of Maximum Power", rarity: "Rare", ingredients: ["Fireblossom", "Thunderbloom", "Gargoyle Scale"] },
+  { name: "Potion of Mind Control", rarity: "Rare", ingredients: ["Ghost Orchid", "Wyvern Venom", "Rotcap Mushroom"] },
+  { name: "Potion of Mind Reading", rarity: "Rare", ingredients: ["Celestial Dew", "Moonvine", "Gloomroot"] },
+  { name: "Oil of Sharpness", rarity: "Very Rare", ingredients: ["Basilisk Eye Fluid", "Elemental Dust", "Gloomroot"] },
+  { name: "Potion of Flying", rarity: "Very Rare", ingredients: ["Phoenix Feather", "Moonvine", "Dragon's Claw"] },
+  { name: "Potion of Healing", rarity: "Very Rare", ingredients: ["Bloodthorn Root", "Nightshade", "Gloomroot"] },
+  { name: "Potion of Invisibility", rarity: "Very Rare", ingredients: ["Ghost Orchid", "Moonvine", "Elemental Dust"] },
+  { name: "Potion of Longevity", rarity: "Very Rare", ingredients: ["Elven Tears", "Celestial Dew", "Rotcap Mushroom"] },
+  { name: "Potion of Mind Control", rarity: "Very Rare", ingredients: ["Ghost Orchid", "Wyvern Venom", "Rotcap Mushroom"] },
+  { name: "Potion of Possibility", rarity: "Very Rare", ingredients: ["Celestial Dew", "Phoenix Feather", "Fireblossom"] },
+  { name: "Potion of Speed", rarity: "Very Rare", ingredients: ["Druid's Bane", "Mandrake Root", "Gloomroot"] },
+  { name: "Potion of Vitality", rarity: "Very Rare", ingredients: ["Bloodthorn Root", "Moonvine", "Phoenix Feather"] },
+  { name: "Potion of Dragon's Majesty", rarity: "Legendary", ingredients: ["Dragon's Claw", "Wyvern Venom", "Elemental Dust", "Fireblossom"] },
+  { name: "Potion of Giant Size", rarity: "Legendary", ingredients: ["Phoenix Feather", "Gargoyle Scale", "Thunderbloom", "Bone Ash"] },
+  { name: "Potion of Giant Strength", rarity: "Legendary", ingredients: ["Dragon's Claw", "Basilisk Eye Fluid", "Moonvine", "Fireblossom"] }
+];
+
+
+    let selectedIngredients = [];
+
+    function generateIngredientButtons() {
+      const ingredientList = [
+        "Bloodthorn Root", "Crimson Lotus Extract", "Frostmint Leaves", "Spider Silk Glands",
+        "Nightshade", "Rotcap Mushroom", "Moonvine", "Dragon’s Claw", "Elemental Dust", "Gloomroot",
+        "Basilisk Eye Fluid", "Wyvern Venom", "Unicorn Horn Shavings", "Mandrake Root", "Ghost Orchid",
+        "Phoenix Feather", "Thunderbloom", "Bone Ash", "Fireblossom", "Druid’s Bane", "Silverleaf",
+        "Celestial Dew", "Black Lotus", "Gargoyle Scale", "Elven Tears",
+      ];
+
+      const ingredientButtons = document.getElementById("ingredientButtons");
+      ingredientButtons.innerHTML = ''; // Clear existing buttons
+
+      ingredientList.forEach(ingredient => {
+        const button = document.createElement("button");
+        button.textContent = ingredient;
+        button.onclick = () => toggleIngredientSelection(ingredient, button);
+        ingredientButtons.appendChild(button);
+      });
+    }
+
+    function toggleIngredientSelection(ingredient, button) {
+      if (selectedIngredients.includes(ingredient)) {
+        selectedIngredients = selectedIngredients.filter(item => item !== ingredient);
+        button.classList.remove("selected");
+      } else {
+        selectedIngredients.push(ingredient);
+        button.classList.add("selected");
+      }
+    }
+
+    function checkPotions() {
+      const possiblePotions = potions.filter(potion => {
+        return potion.ingredients.every(ingredient => selectedIngredients.includes(ingredient));
+      });
+
+      const potionsList = document.getElementById("potionsList");
+      potionsList.innerHTML = ""; // Clear previous results
+
+      if (possiblePotions.length > 0) {
+        possiblePotions.forEach(potion => {
+          const li = document.createElement("li");
+          li.textContent = `${potion.name} (${potion.rarity})`;
+          li.onclick = () => showPotionDetails(potion);
+          potionsList.appendChild(li);
+        });
+        document.getElementById("result").style.display = "block";
+      } else {
+        const li = document.createElement("li");
+        li.textContent = "No potions can be crafted with these ingredients.";
+        potionsList.appendChild(li);
+        document.getElementById("result").style.display = "block";
+      }
+    }
+
+    function showPotionDetails(potion) {
+      const potionIngredientsList = document.getElementById("potionIngredientsList");
+      potionIngredientsList.innerHTML = ""; // Clear previous details
+
+      potion.ingredients.forEach(ingredient => {
+        const li = document.createElement("li");
+        li.textContent = ingredient;
+        potionIngredientsList.appendChild(li);
+      });
+
+      document.getElementById("potionDetails").classList.add("show");
+    }
+
+    function closePotionDetails() {
+      document.getElementById("potionDetails").classList.remove("show");
+    }
+
+    // Initialize the page by generating the ingredient buttons
+    generateIngredientButtons();
+  </script>
+</body>
+</html>
